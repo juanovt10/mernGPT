@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express-serve-static-core";
 import User from "../models/User.js";
 import { hash, compare } from 'bcrypt';
+import { createToken } from '../utils/token-manager.js'
+import { COOKIE_NAME } from "../utils/constants.js";
 
 export const getAllUsers = async (
   req:Request,
@@ -45,6 +47,25 @@ export const userSignup = async (
       
       // save the new instance
       await user.save();
+
+      // clears and assign tokens to users -> see login method for more detail
+      res.clearCookie(COOKIE_NAME, {
+        path: '/',
+        domain: "localhost",
+        httpOnly: true,
+        signed: true,
+      });
+
+      const token = createToken(user._id.toString(), user.email, '7d');
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7)
+      res.cookie(COOKIE_NAME, token, {
+        path: '/',
+        domain: "localhost",
+        expires,
+        httpOnly: true,
+        signed: true,
+      });
       
       return res.status(201).json({ message: "OK", id: user._id.toString() })
       
@@ -78,6 +99,33 @@ export const userSignup = async (
         if (!isPaswordCorrect) {
           return res.status(403).send("Incorrect password")
         }
+
+
+        // this removes the exisiting user cookies and proceed to add the new ones
+        res.clearCookie(COOKIE_NAME, {
+          path: '/',
+          domain: "localhost",
+          httpOnly: true,
+          signed: true,
+        });
+
+        // get the create token method and assing
+        // the values of the validated request
+        const token = createToken(user._id.toString(), user.email, '7d');
+
+        // create the expiry date by adding 7 days
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7)
+
+        // give the cookie back to the front end
+        res.cookie(COOKIE_NAME, token, {
+          path: '/',
+          domain: "localhost",
+          expires,
+          httpOnly: true,
+          signed: true,
+        });
+
 
         return res.status(200).json({ message: "OK", id:user._id.toString() })
       } catch (error) {

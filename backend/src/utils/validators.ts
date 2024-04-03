@@ -13,7 +13,6 @@ export const validate = (validations: ValidationChain[]) => {
       if (!result.isEmpty()) {
         break;
       }
-
     }
 
     // then define the errors of the request
@@ -32,11 +31,18 @@ export const validate = (validations: ValidationChain[]) => {
 // name cannot be empty 
 // email is trimmed and must be an email
 // password is trimmed and needs to be min 6 characters
-export const signupValidator = [
-  body("name").notEmpty().withMessage("Name is required"),
+export const loginValidator = [
   body("email").trim().isEmail().withMessage("Email is required"),
   body("password")
     .trim()
     .isLength({ min:6 })
-    .withMessage("Password should contain at least 6 characters"),
+    .withMessage("Password should contain a t least 6 characters"),
 ]
+
+// basically just use the the ... notation to place the stuff
+// of the login validation in this one to not DRY
+export const signupValidator = [
+  body("name").notEmpty().withMessage("Name is required"),
+  ...loginValidator,
+]
+
